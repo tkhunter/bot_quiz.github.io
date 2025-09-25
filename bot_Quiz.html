@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測驗網站</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .upload-section, .quiz-selection, .quiz-container, .result-container, .study-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        .upload-section {
+            text-align: center;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .question {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #3498db;
+        }
+        .options {
+            list-style-type: none;
+            padding: 0;
+        }
+        .option {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .option:hover {
+            background-color: #e3e3e3;
+        }
+        .option.selected {
+            background-color: #bde0ff;
+        }
+        .option.correct {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .quiz-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .result-heading {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #27ae60;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .wrong-answers {
+            margin-top: 20px;
+        }
+        .wrong-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #ffeeee;
+            border-left: 4px solid #e74c3c;
+        }
+        .question-number {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            margin: 15px 0;
+            border-radius: 4px;
+            height: 20px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-size: 14px;
+        }
+        .explanation {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .mode-btn {
+            padding: 12px 25px;
+            margin: 0 10px;
+            font-size: 18px;
+        }
+        .study-item {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .study-question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .study-options {
+            margin-bottom: 15px;
+        }
+        .study-answer {
+            font-weight: bold;
+            color: #28a745;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+        .selection-type {
+            font-weight: bold;
+            color: #e67e22;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        /* 新增：題目類型選擇樣式 */
+        .question-type-selection {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .question-type-selection h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .type-option {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+        .type-option input[type="radio"] {
+            margin-right: 5px;
+        }
+        .type-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>測驗網站</h1>
+        
+        <!-- 上傳區域 -->
+        <div class="upload-section" id="uploadSection">
+            <h2>上傳試題</h2>
+            <input type="file" id="fileInput" accept=".json">
+            <div id="fileStatus"></div>
+        </div>
+        
+        <!-- 測驗選擇區域 -->
+        <div class="quiz-selection hidden" id="quizSelection">
+            <h2>選擇模式</h2>
+            <div class="mode-selection">
+                <button id="studyModeBtn" class="mode-btn">導讀模式</button>
+                <button id="quizModeBtn" class="mode-btn">測驗模式</button>
+            </div>
+            <div id="quizSettings" class="hidden">
+                <h3>測驗設定</h3>
+                
+                <!-- 新增：題目類型選擇 -->
+                <div class="question-type-selection">
+                    <h4>題目類型：</h4>
+                    <div class="type-option">
+                        <input type="radio" id="typeAll" name="questionType" value="all" checked>
+                        <label for="typeAll">全部題目</label>
+                    </div>
+                    <div class="type-option">
+                        <input type="radio" id="typeSingle" name="questionType" value="single">
+                        <label for="typeSingle">只有單選題</label>
+                    </div>
+                    <div class="type-option">
+                        <input type="radio" id="typeMultiple" name="questionType" value="multiple">
+                        <label for="typeMultiple">只有多選題</label>
+                    </div>
+                    <div class="type-info" id="typeInfo">
+                        可選題目：全部 <span id="totalQuestions">0</span> 題 (單選：<span id="singleCount">0</span> 題，多選：<span id="multipleCount">0</span> 題)
+                    </div>
+                </div>
+                
+                <p>
+                    <label for="questionCount">測驗題數：</label>
+                    <input type="number" id="questionCount" min="1" value="10">
+                    <span id="maxQuestionsInfo"></span>
+                </p>
+                <p>
+                    <label for="minQuestionNumber">題號範圍：</label>
+                    <input type="number" id="minQuestionNumber" min="1" style="width:60px;" value="1">
+                    ~
+                    <input type="number" id="maxQuestionNumber" min="1" style="width:60px;" value="1">
+                </p>
+                <button id="startQuizBtn">開始測驗</button>
+            </div>
+        </div>
+        
+        <!-- 測驗區域 -->
+        <div class="quiz-container hidden" id="quizContainer">	
+			<div style="float:right">
+				<button id="restartBtn">重新開始</button>
+			</div>
+				</br>
+				</br>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">0%</div>				
+            </div>
+            <div class="question-container">
+                <div class="question" id="questionText"></div>
+                <div class="selection-type" id="selectionType"></div>
+                <ul class="options" id="optionsList"></ul>
+            </div>
+            <div class="quiz-navigation">
+                <button id="prevBtn">上一題</button>
+                <span id="questionStatus"></span>
+                <button id="nextBtn">下一題</button>				
+                <button id="submitBtn" class="hidden">提交測驗</button>
+            </div>
+        </div>
+        
+        <!-- 結果區域 -->
+        <div class="result-container hidden" id="resultContainer">
+            <h2 class="result-heading">測驗結果</h2>
+            <div class="score" id="scoreDisplay"></div>
+            <div class="wrong-answers">
+                <h3>錯誤題目列表</h3>
+                <div id="wrongAnswersList"></div>
+            </div>
+            <button id="restartBtn2">重新開始</button>
+        </div>
+        
+        
+<!-- 題號定位浮動工具 -->
+<div id="jumpToQuestionBox" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: white;
+    border: 2px solid #3498db;
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 999;
+    display: none;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+">
+    <label for="jumpInput">跳至題號：</label>
+    <input type="number" id="jumpInput" min="1" style="width: 60px;" />
+    <button id="jumpBtn">確定</button>
+</div>
+
+
+<!-- 浮動返回按鈕 -->
+<button id="floatingBackBtn" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 50px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 9999;
+">
+⬅ 返回
+</button>
+
+<!-- 導讀區域 -->
+        <div class="study-container hidden" id="studyContainer">
+            <h2>導讀模式</h2>
+            <div class="study-content" id="studyContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 獲取DOM元素
+            const uploadSection = document.getElementById('uploadSection');
+            const quizSelection = document.getElementById('quizSelection');
+            const quizContainer = document.getElementById('quizContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            const studyContainer = document.getElementById('studyContainer');
+            const fileInput = document.getElementById('fileInput');
+            const fileStatus = document.getElementById('fileStatus');
+            const maxQuestionsInfo = document.getElementById('maxQuestionsInfo');
+            const questionCountInput = document.getElementById('questionCount');
+            const startQuizBtn = document.getElementById('startQuizBtn');
+            const studyModeBtn = document.getElementById('studyModeBtn');
+            const quizModeBtn = document.getElementById('quizModeBtn');
+            const quizSettings = document.getElementById('quizSettings');
+            const questionText = document.getElementById('questionText');
+            const selectionType = document.getElementById('selectionType');
+            const optionsList = document.getElementById('optionsList');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const questionStatus = document.getElementById('questionStatus');
+            const progressBar = document.getElementById('progressBar');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const wrongAnswersList = document.getElementById('wrongAnswersList');
+            const restartBtn = document.getElementById('restartBtn');
+			const restartBtn2 = document.getElementById('restartBtn2');
+            const studyContent = document.getElementById('studyContent');
+            
+            // 新增：題目類型相關元素
+            const totalQuestionsSpan = document.getElementById('totalQuestions');
+            const singleCountSpan = document.getElementById('singleCount');
+            const multipleCountSpan = document.getElementById('multipleCount');
+            const questionTypeRadios = document.querySelectorAll('input[name="questionType"]');
+
+            // 全域變數
+            let quizData = [];
+            let shuffledQuestions = [];
+            let selectedQuestionCount = 10;
+            let currentQuestionIndex = 0;
+            let userAnswers = [];
+            
+            // 監聽文件上傳
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const fileContent = e.target.result;
+                            quizData = JSON.parse(fileContent);
+                            
+                            if (Array.isArray(quizData) && quizData.length > 0) {
+                                fileStatus.innerHTML = `成功載入 ${quizData.length} 道試題`;
+                                maxQuestionsInfo.textContent = `(可選擇 1-${quizData.length} 題)`;
+                                questionCountInput.max = quizData.length;
+                                questionCountInput.value = Math.min(10, quizData.length);
+                                quizSelection.classList.remove('hidden');
+                                document.getElementById('minQuestionNumber').value = Math.min(...quizData.map(q => q.questionNumber));
+                                document.getElementById('maxQuestionNumber').value = Math.max(...quizData.map(q => q.questionNumber));
+                                document.getElementById('minQuestionNumber').max = quizData.length;
+                                document.getElementById('maxQuestionNumber').max = quizData.length;
+                                
+                                // 更新題目類型統計
+                                updateQuestionTypeInfo();
+                            } else {
+                                fileStatus.innerHTML = '檔案格式錯誤，請確保是有效的試題JSON檔案';
+                            }
+                        } catch (error) {
+                            fileStatus.innerHTML = '解析文件時出錯：' + error.message;
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            // 新增：更新題目類型資訊
+            function updateQuestionTypeInfo() {
+                const singleQuestions = quizData.filter(q => q.answer.length === 1);
+                const multipleQuestions = quizData.filter(q => q.answer.length > 1);
+                
+                totalQuestionsSpan.textContent = quizData.length;
+                singleCountSpan.textContent = singleQuestions.length;
+                multipleCountSpan.textContent = multipleQuestions.length;
+            }
+            
+            // 新增：監聽題目類型選擇變化
+            questionTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateAvailableQuestions();
+                });
+            });
+            
+            // 新增：根據選擇的題目類型更新可用題目數
+            function updateAvailableQuestions() {
+                const selectedType = document.querySelector('input[name="questionType"]:checked').value;
+                let availableQuestions = [];
+                
+                switch(selectedType) {
+                    case 'single':
+                        availableQuestions = quizData.filter(q => q.answer.length === 1);
+                        break;
+                    case 'multiple':
+                        availableQuestions = quizData.filter(q => q.answer.length > 1);
+                        break;
+                    case 'all':
+                    default:
+                        availableQuestions = quizData;
+                        break;
+                }
+                
+                maxQuestionsInfo.textContent = `(可選擇 1-${availableQuestions.length} 題)`;
+                questionCountInput.max = availableQuestions.length;
+                questionCountInput.value = Math.min(questionCountInput.value, availableQuestions.length);
+            }
+            
+            // 選擇導讀模式
+            studyModeBtn.addEventListener('click', function() {
+                uploadSection.classList.add('hidden');
+                quizSelection.classList.add('hidden');
+                studyContainer.classList.remove('hidden');
+                
+                // 載入所有題目進行導讀
+                loadStudyContent();
+                document.getElementById('jumpToQuestionBox').style.display = 'block';
+            });
+            
+            // 選擇測驗模式
+            quizModeBtn.addEventListener('click', function() {
+                quizSettings.classList.remove('hidden');
+                studyModeBtn.disabled = true;
+                quizModeBtn.disabled = true;
+            });
+            
+            // 載入導讀內容
+            function loadStudyContent() {
+                studyContent.innerHTML = '';
+                
+                quizData.forEach((question, index) => {
+                    const studyItem = document.createElement('div');
+                    studyItem.className = 'study-item';
+                    
+                    // 問題
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'study-question';
+                    questionDiv.innerHTML = `<span class="question-number">${index + 1}.</span> ${question.question}`;
+                    
+                    // 顯示題目類型（單選/多選）
+                    if (question.answer.length > 1) {
+                        questionDiv.innerHTML += ' <span style="color:#e67e22;">[多選題]</span>';
+                    } else {
+                        questionDiv.innerHTML += ' <span style="color:#3498db;">[單選題]</span>';
+                    }
+                    
+                    studyItem.appendChild(questionDiv);
+                    
+                    // 選項
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.className = 'study-options';
+                    
+                    question.options.forEach(option => {
+                        const optionEl = document.createElement('div');
+                        const isCorrect = question.answer.includes(option.optionNumber);
+                        optionEl.className = isCorrect ? 'option correct' : 'option';
+                        optionEl.innerHTML = `${option.optionNumber}. ${option.text}`;
+                        optionsDiv.appendChild(optionEl);
+                    });
+                    
+                    studyItem.appendChild(optionsDiv);
+                    
+                    studyContent.appendChild(studyItem);
+                });
+            }
+            
+            // 開始測驗
+            startQuizBtn.addEventListener('click', function() {
+                selectedQuestionCount = parseInt(questionCountInput.value);
+                if (isNaN(selectedQuestionCount) || selectedQuestionCount < 1) {
+                    alert('請輸入有效的測驗題數');
+                    return;
+                }
+                const minNum = parseInt(document.getElementById('minQuestionNumber').value);
+                const maxNum = parseInt(document.getElementById('maxQuestionNumber').value);
+
+                if (isNaN(minNum) || isNaN(maxNum) || minNum < 1 || maxNum < minNum) {
+                    alert('請輸入有效的題號範圍');
+                    return;
+                }
+
+                // 根據題號範圍篩選題目
+                let rangedQuestions = quizData.filter(q =>
+                    q.questionNumber >= minNum && q.questionNumber <= maxNum
+                );
+                
+                // 新增：根據選擇的題目類型進一步篩選
+                const selectedType = document.querySelector('input[name="questionType"]:checked').value;
+                switch(selectedType) {
+                    case 'single':
+                        rangedQuestions = rangedQuestions.filter(q => q.answer.length === 1);
+                        break;
+                    case 'multiple':
+                        rangedQuestions = rangedQuestions.filter(q => q.answer.length > 1);
+                        break;
+                    case 'all':
+                    default:
+                        // 不需要額外篩選
+                        break;
+                }
+
+                if (rangedQuestions.length === 0) {
+                    alert('選擇的條件下沒有可用的題目');
+                    return;
+                }
+                
+                selectedQuestionCount = Math.min(selectedQuestionCount, rangedQuestions.length);
+                
+                // 洗牌選擇題目
+                shuffledQuestions = [...rangedQuestions]
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, selectedQuestionCount);
+                    
+                userAnswers = Array(selectedQuestionCount).fill(null);
+                currentQuestionIndex = 0;
+                
+                uploadSection.classList.add('hidden');
+                quizSelection.classList.add('hidden');
+                quizContainer.classList.remove('hidden');
+                
+                loadQuestion(currentQuestionIndex);
+                updateNavigationButtons();
+            });
+            
+            // 加載問題
+            function loadQuestion(index) {
+                const question = shuffledQuestions[index];
+                questionText.innerHTML = `<span class="question-number">${index + 1}.</span> ${question.question}`;
+                
+                // 判斷是單選還是多選
+                const isMultipleChoice = question.answer.length > 1;
+                if (isMultipleChoice) {
+                    selectionType.textContent = "【多選題】請選擇所有正確的答案";
+                    selectionType.style.color = "#e67e22";
+                } else {
+                    selectionType.textContent = "【單選題】請選擇一個正確的答案";
+                    selectionType.style.color = "#3498db";
+                }
+                
+                optionsList.innerHTML = '';
+                question.options.forEach(option => {
+                    const li = document.createElement('li');
+                    li.className = 'option';
+                    li.dataset.optionNumber = option.optionNumber;
+                    li.innerHTML = `${option.optionNumber}. ${option.text}`;
+                    
+                    // 如果這個選項已被選擇，添加selected類
+                    if (userAnswers[index] && userAnswers[index].includes(option.optionNumber)) {
+                        li.classList.add('selected');
+                    }
+                    
+                    li.addEventListener('click', function() {
+                        const optionNumber = parseInt(this.dataset.optionNumber);
+                        
+                        // 確保userAnswers[index]是一個數組
+                        if (!userAnswers[index]) {
+                            userAnswers[index] = [];
+                        }
+                        
+                        if (isMultipleChoice) {
+                            // 多選模式
+                            if (this.classList.contains('selected')) {
+                                // 如果已選中，則取消選中
+                                this.classList.remove('selected');
+                                userAnswers[index] = userAnswers[index].filter(num => num !== optionNumber);
+                            } else {
+                                // 如果未選中，則選中
+                                this.classList.add('selected');
+                                userAnswers[index].push(optionNumber);
+                            }
+                        } else {
+                            // 單選模式
+                            optionsList.querySelectorAll('.option').forEach(opt => {
+                                opt.classList.remove('selected');
+                            });
+                            this.classList.add('selected');
+                            userAnswers[index] = [optionNumber];
+                        }
+                    });
+                    
+                    optionsList.appendChild(li);
+                });
+                
+                // 更新進度和狀態
+                const progress = ((index + 1) / selectedQuestionCount) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${Math.round(progress)}%`;
+                questionStatus.textContent = `${index + 1} / ${selectedQuestionCount}`;
+            }
+            
+            // 更新導航按鈕狀態
+            function updateNavigationButtons() {
+                prevBtn.disabled = currentQuestionIndex === 0;
+                
+                if (currentQuestionIndex === selectedQuestionCount - 1) {
+                    nextBtn.classList.add('hidden');
+                    submitBtn.classList.remove('hidden');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                    submitBtn.classList.add('hidden');
+                }
+            }
+            
+            // 前一題
+            prevBtn.addEventListener('click', function() {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    loadQuestion(currentQuestionIndex);
+                    updateNavigationButtons();
+                }
+            });
+            
+            // 下一題
+            nextBtn.addEventListener('click', function() {
+                if (currentQuestionIndex < selectedQuestionCount - 1) {
+                    currentQuestionIndex++;
+                    loadQuestion(currentQuestionIndex);
+                    updateNavigationButtons();
+                }
+            });
+            
+            // 提交測驗
+            submitBtn.addEventListener('click', function() {
+                console.log("提交按鈕被點擊");
+                // 檢查是否有題目未作答
+                const unanswered = userAnswers.findIndex(answer => answer === null || answer.length === 0);
+                if (unanswered !== -1) {
+                    if (!confirm(`第 ${unanswered + 1} 題尚未作答，確定要提交嗎？`)) {
+                        return;
+                    }
+                }
+                
+                calculateResult();
+            });
+            
+            // 計算結果
+            function calculateResult() {
+                console.log("計算結果函數被呼叫");
+                let correctCount = 0;
+                const wrongQuestions = [];
+                
+                shuffledQuestions.forEach((question, index) => {
+                    const userAnswer = userAnswers[index] || [];
+                    const correctAnswers = question.answer;
+                    
+                    console.log(`題目 ${index+1}:`, question.question);
+                    console.log(`用戶答案:`, userAnswer);
+                    console.log(`正確答案:`, correctAnswers);
+                    
+                    // 修正：比較答案前確保答案都是字串形式
+                    const userAnswerStrings = userAnswer.map(String);
+                    const correctAnswerStrings = correctAnswers.map(String);
+                    
+                    // 檢查答案是否正確
+                    const isCorrect = arraysEqual(userAnswerStrings, correctAnswerStrings);
+                    console.log(`答案正確?`, isCorrect);
+                    
+                    if (isCorrect) {
+                        correctCount++;
+                    } else {
+                        wrongQuestions.push({
+                            index: index + 1,
+                            question: question.question,
+                            userAnswer: userAnswer,
+                            correctAnswer: correctAnswers,
+                            options: question.options,
+                            isMultipleChoice: correctAnswers.length > 1
+                        });
+                    }
+                });
+                
+                // 顯示成績
+                const scorePercentage = Math.round((correctCount / selectedQuestionCount) * 100);
+                scoreDisplay.textContent = `${correctCount} / ${selectedQuestionCount} (${scorePercentage}%)`;
+                console.log(`分數: ${correctCount}/${selectedQuestionCount} (${scorePercentage}%)`);
+                
+                // 顯示錯誤題目
+                wrongAnswersList.innerHTML = '';
+                if (wrongQuestions.length === 0) {
+                    wrongAnswersList.innerHTML = '<p>恭喜！全部答對！</p>';
+                } else {
+                    wrongQuestions.forEach(wrongItem => {
+                        const wrongItemDiv = document.createElement('div');
+                        wrongItemDiv.className = 'wrong-item';
+                        
+                        // 顯示題目類型
+                        const questionType = wrongItem.isMultipleChoice ? 
+                            '<span style="color:#e67e22;">[多選題]</span>' : 
+                            '<span style="color:#3498db;">[單選題]</span>';
+                        
+                        // 獲取正確選項的文字
+                        const correctOptionTexts = wrongItem.correctAnswer.map(ansNum => {
+                            const option = wrongItem.options.find(opt => opt.optionNumber === ansNum);
+                            return option ? `${ansNum}. ${option.text}` : `選項 ${ansNum}`;
+                        }).join('<br>');
+                        
+                        // 獲取用戶選項的文字
+                        let userOptionTexts = '';
+                        if (wrongItem.userAnswer.length > 0) {
+                            userOptionTexts = wrongItem.userAnswer.map(ansNum => {
+                                const option = wrongItem.options.find(opt => opt.optionNumber === ansNum);
+                                return option ? `${ansNum}. ${option.text}` : `選項 ${ansNum}`;
+                            }).join('<br>');
+                        } else {
+                            userOptionTexts = '未作答';
+                        }
+                        
+                        wrongItemDiv.innerHTML = `
+                            <div><span class="question-number">題目 ${wrongItem.index}:</span> ${wrongItem.question} ${questionType}</div>
+                            <div>您的答案: <br>${userOptionTexts}</div>
+                            <div>正確答案: <br>${correctOptionTexts}</div>
+                        `;
+                        
+                        wrongAnswersList.appendChild(wrongItemDiv);
+                    });
+                }
+                
+                console.log("切換到結果頁面");
+                // 切換到結果頁面
+                quizContainer.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+            }
+            
+            // 重新開始
+            restartBtn.addEventListener('click', function() {
+                resultContainer.classList.add('hidden');
+				quizContainer.classList.add('hidden');
+                uploadSection.classList.remove('hidden');
+                quizSelection.classList.remove('hidden');
+                studyModeBtn.disabled = false;
+                quizModeBtn.disabled = false;
+                quizSettings.classList.add('hidden');
+                document.getElementById('jumpToQuestionBox').style.display = 'none';
+            });
+			
+			 // 重新開始2
+            restartBtn2.addEventListener('click', function() {
+                resultContainer.classList.add('hidden');
+				quizContainer.classList.add('hidden');
+                uploadSection.classList.remove('hidden');
+                quizSelection.classList.remove('hidden');
+                studyModeBtn.disabled = false;
+                quizModeBtn.disabled = false;
+                quizSettings.classList.add('hidden');
+                document.getElementById('jumpToQuestionBox').style.display = 'none';
+            });
+            
+            
+            // 題號跳轉邏輯
+            document.getElementById('jumpBtn').addEventListener('click', function() {
+                const input = document.getElementById('jumpInput');
+                const questionNum = parseInt(input.value);
+                const items = document.querySelectorAll('#studyContent .study-item');
+
+                if (!isNaN(questionNum) && questionNum >= 1 && questionNum <= items.length) {
+                    const target = items[questionNum - 1];
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    alert('請輸入有效的題號');
+                }
+            });
+
+            
+            // 浮動返回按鈕功能：模擬點擊返回
+            document.getElementById('floatingBackBtn').addEventListener('click', function () {
+				studyContainer.classList.add('hidden');
+                uploadSection.classList.remove('hidden');
+                quizSelection.classList.remove('hidden');
+                studyModeBtn.disabled = false;
+                quizModeBtn.disabled = false;
+                quizSettings.classList.add('hidden');
+                document.getElementById('jumpToQuestionBox').style.display = 'none';
+				document.getElementById('floatingBackBtn').style.display = 'none';
+            });
+
+            // 顯示浮動返回按鈕於導讀模式
+            studyModeBtn.addEventListener('click', function () {
+                document.getElementById('floatingBackBtn').style.display = 'block';
+            });
+
+            // 輔助函數：比較兩個數組是否相等
+            function arraysEqual(arr1, arr2) {
+                console.log("比較數組:", arr1, arr2);
+                if (!arr1 || !arr2) return false;
+                if (arr1.length !== arr2.length) return false;
+                // 確保兩個數組都已經排序
+                const sortedArr1 = [...arr1].sort();
+                const sortedArr2 = [...arr2].sort();
+                for (let i = 0; i < sortedArr1.length; i++) {
+                    if (sortedArr1[i] !== sortedArr2[i]) return false;
+                }
+                return true;
+            }
+        });
+    </script>
+</body>
+</html>
